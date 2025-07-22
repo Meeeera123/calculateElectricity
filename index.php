@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $energy = $power_kw * $hour;          // Energy in kWh
             $total  = $energy * $rate_rm;         // Total cost in RM
 
-            // Store formatted results
+            // Store
             $results[] = [
                 'hour'   => $hour,
                 'energy' => number_format($energy, 5),
