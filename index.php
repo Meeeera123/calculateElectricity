@@ -1,55 +1,71 @@
 <?php
-// Calculate Electricity
-$results = [];       // Stores calculated results for each hour
-$power_wh = 0;       // Power in watt-hour
-$rate_rm = 0;        // Electricity rate in RM
-$error = "";         // Stores error messages if validation fails
+// Calculate electricity (Fix using function)
+// Function: calculateElectricity
+// Inputs: voltage (V), current (A), rate (sen per kWh)
+
+function calculateElectricity($voltage, $current, $current_rate) {
+    $results = [];
+
+    // Formula reference:
+    // Power (W)   = Voltage (V) × Current (A)
+    // Energy (kWh) = (Power (W) × Hour) ÷ 1000
+    // Total (RM)  = Energy (kWh) × (Rate (sen) ÷ 100)
+
+    // Calculate power in watts
+    $power_watt = $voltage * $current;
+
+    // Convert to kilowatts
+    $power_kw = $power_watt / 1000;
+
+    // Convert sen to RM
+    $rate_rm = $current_rate / 100;
+
+    // Calculate for each hour from 1 to 24
+    for ($hour = 1; $hour <= 24; $hour++) {
+        $energy = $power_kw * $hour;    // kWh
+        $total  = $energy * $rate_rm;   // RM
+
+        $results[] = [
+            'hour'   => $hour,
+            'energy' => number_format($energy, 5),
+            'total'  => number_format($total, 2)
+        ];
+    }
+
+    return [
+        'power_kw' => $power_kw,
+        'rate_rm'  => $rate_rm,
+        'rows'     => $results
+    ];
+}
+
+// Main script starts here
+$error = "";
+$power_kw = 0;
+$rate_rm = 0;
+$results = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    // Retrieve input values from the form
     $voltage = $_POST['voltage'];
     $current = $_POST['current'];
     $current_rate = $_POST['rate'];
 
-
-    // Only accepted the POSITIVE NUMERIC ONLY
-
-    // Validate that all inputs are numeric
+    // Validate inputs
     if (!is_numeric($voltage) || !is_numeric($current) || !is_numeric($current_rate)) {
         $error = "Please enter numeric values only.";
-    }
-    // Validate that all inputs are non-negative
-    elseif ($voltage < 0 || $current < 0 || $current_rate < 0) {
+    } elseif ($voltage < 0 || $current < 0 || $current_rate < 0) {
         $error = "Values cannot be negative. Please enter positive numbers.";
-    }
-    else {
-        // Convert input values to float for calculation
+    } else {
+        // Convert to float
         $voltage = floatval($voltage);
         $current = floatval($current);
         $current_rate = floatval($current_rate);
 
-        // Calculate power in watts (V × A)
-        $power_watt = $voltage * $current;
-
-        // Convert watts to kilowatts
-        $power_kw = $power_watt / 1000;
-
-        // Convert rate from sen to RM
-        $rate_rm = $current_rate / 100;
-
-        // Calculate energy consumption and total cost for 1-24 hours
-        for ($hour = 1; $hour <= 24; $hour++) {
-            $energy = $power_kw * $hour;          // Energy in kWh
-            $total  = $energy * $rate_rm;         // Total cost in RM
-
-            // Store
-            $results[] = [
-                'hour'   => $hour,
-                'energy' => number_format($energy, 5),
-                'total'  => number_format($total, 2)
-            ];
-        }
+        // Perform calculation
+        $calc = calculateElectricity($voltage, $current, $current_rate);
+        $power_kw = $calc['power_kw'];
+        $rate_rm  = $calc['rate_rm'];
+        $results  = $calc['rows'];
     }
 }
 ?>
@@ -74,14 +90,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
       border-radius: 15px;
     }
-    h1 {
-      font-weight: 700;
-      color: #333;
-    }
-    .table thead th {
-      background-color: #343a40;
-      color: #fff;
-    }
+    h1 { font-weight: 700; color: #333; }
+    .table thead th { background-color: #343a40; color: #fff; }
     footer {
       margin-top: 20px;
       color: #fff;
@@ -99,7 +109,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="card p-4">
         <h1 class="text-center mb-4">Electricity Calculator</h1>
 
-        <!-- Show error if any -->
         <?php if($error): ?>
           <div class="alert alert-danger"><?= $error ?></div>
         <?php endif; ?>
@@ -127,12 +136,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   class="btn btn-primary btn-block btn-lg"
                   data-toggle="tooltip"
                   data-placement="top"
-                  title="Click to calculate electricity usage and cost">
-            🔍 Calculate
+                  title="Click to calculate electricity usage and cost">🔍 Calculate
           </button>
         </form>
 
-        <!-- Output results -->
         <?php if(!empty($results) && !$error): ?>
           <div class="alert alert-info">
             <strong>Power:</strong> <?=number_format($power_kw,5)?> kW &nbsp; | &nbsp;
@@ -166,16 +173,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 </div>
 
-<!-- Bootstrap tooltip JS -->
+<!-- Script -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-  });
+  $(function () { $('[data-toggle="tooltip"]').tooltip() });
 
-  // Client-side validation
   function validateNumbers() {
     let v = document.getElementById('voltage').value;
     let c = document.getElementById('current').value;
