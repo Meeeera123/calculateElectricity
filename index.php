@@ -61,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $current = floatval($current);
         $current_rate = floatval($current_rate);
 
-        // Perform calculation
+        // Calculation
         $calc = calculateElectricity($voltage, $current, $current_rate);
         $power_kw = $calc['power_kw'];
         $rate_rm  = $calc['rate_rm'];
